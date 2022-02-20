@@ -1,0 +1,139 @@
+There are some ways to deploy the nodejs apps in pods such as k8s, minkube, aws eks, docker swarm.
+here we are using the one of important features in aws is eks 
+to create eks in aws, we have to install tools before such as aws cli, eksctl to control the eks from commandline 
+and aslo in aws console, we need to set up the cloudformation and ECR before running the pods in eks 
+
+
+
+Deploying a NodeJS app using Docker and K8s on AWS
+we have to install docker once installed run the following to ensure that everything works fine
+docker version
+Install AWS-CLI
+To install the AWS-CLI, the only prerequisite you need is to have an AWS account
+Create an IAM user with Administrator access to login to account from CLI
+Run the following commands
+aws configure (it creates aws access key and secret key)
+aws iam get-user (it creates user, path, user id, createdate)
+Then we have to create a repository in AWS ECR 
+ECR is very similar to the Docker hub but is only managed by AWS.
+go to Services -> ECR -> Create Repository(public)
+
+create a Node.js application by following steps
+
+mkdir test
+cd test
+npm init
+npm install express
+Create A Docker Image & Push It To ECR
+
+Creating a Dockerfile:
+
+FROM node:12.4.0-alpine
+WORKDIR /work/
+COPY ./package.json /work/package.json
+RUN npm install
+COPY . /work/
+CMD node .
+	
+for authentication token and authenticate your Docker client to your registry
+
+aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/<any_seq_provided>
+
+now building docker image
+
+docker build -t nodejs/helloworld
+now pushing image to repository
+
+docker tag nodejs/helloworld:latest public.ecr.aws/<any_seq_provided>/nodejs/helloworld:latest
+
+Push this image to the newly created AWS repository
+
+docker push public.ecr.aws/<any_seq_provided>nodejs/helloworld/:latest
+
+Create a VPC for CloudFormation and create a stack in amazon s3 url we have to enter the following 
+https://amazon-eks.s3.us-west-2.amazonaws.com/cloudformation/2020-04-21/amazon-eks-vpc-private-subnets.yaml
+
+now creation of cluster
+A Kubernetes cluster is a set of node machines for running containerized applications. If you are running Kubernetes, you are running a cluster.
+First create an IAM role with AmazonEKSClusterPolicy
+Now move to Services -> EKS -> Clusters -> Create Cluster
+give a name for the cluster and select kubernetes version and select IAM role and also VPC 
+wait until the cluster state runs active
+
+Configure kubectl
+The kubectl command line tool lets you control Kubernetes clusters.
+Enable Kubernetes
+COPY
+aws eks --region <region-code> update-kubeconfig --name <cluster_name>
+kubectl get svc (to show service)
+
+creating worker nodes
+A Kubernetes cluster consists of a set of worker machines, called nodes, that run containerized applications
+First create an IAM role with AmazonEKSWorkerNodePolicy and AmazonEC2 ContainerReistryReadOnly policies
+Now select the cluster and move to Configuration -> Compute -> Add Node Group
+Create a Node group with the IAM role created previously
+In the Specify networking tab select a SSH key pair so as to be able to SSH into created instances also select security group as the default one
+now create the Node Group and wait for its state to turn to Active
+then run 
+COPY
+kubectl get nodes --watch (to display the running nodes)
+now here we have a big step to do that is 
+
+CREATE DEPLOYMENT AND SERVICES
+
+A Deployment instructs Kubernetes how to create and update instances of your application. Once you've created a Deployment
+the Kubernetes master schedules the application instances included in that Deployment to run on individual Nodes in the cluster
+
+CREATION OF SERVICE
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp
+  labels:
+    run: webapp
+spec:
+  ports:
+  - port: 3080
+    protocol: TCP
+  selector:
+    app: webapp
+  type: NodePort
+
+CREATION OF DEPLOYMENT
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: webapp
+  name: webapp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: webapp
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: webapp
+    spec:
+      containers:
+      - image: public.ecr.aws/b5c5s7l4/nodejs/helloworld:latest
+        name: webapp
+        imagePullPolicy: Always
+        resources: {}
+        ports:
+          - containerPort: 3080 
+
+now run
+ 
+kubectl create -f nodejs.yml
+kubectl get svc
+kubectl get deploy
+kubectl get pods
+
+Finally now you have successfully deployed your Node.js app on the EKS cluster
