@@ -1,0 +1,40 @@
+# SSL and TLS are the most crucial feature for running applications since which create the protection layer for apps 
+# in Kubernetes there are a few ways to secure application with these key and certification with the help of ingress and secrets
+ 
+#   $ kubectl create secret tls Node-demossl --namespace default --key node-dem.key --cert node-demo.crt          
+   
+#   $ kubectl get secrets 
+
+# then
+  
+#    $ openssl req -newkey rsa:20148 -nodes -key Node-demo.key -out Node-demo.crt -subj "/CN=helloworldnodejs.com" 
+
+# this command is used to generate the key and certificate for apps using cert manager of kubernetes 
+
+
+#    $ ll -lrt (to know list of keys)
+
+# the generated key is to be added to secrets 
+# after this, we have to create ingress with tls and secrets 
+
+# --- 
+# apiVersion: extensions/v1beta1
+# kind: Ingress
+# metadata: 
+#   name: tls-example-ingress
+# spec: 
+#   rules: 
+#     - 
+#       host: mydomain.com
+#       http: 
+#         paths: 
+#           - 
+#             backend: 
+#               serviceName: my-service
+#               servicePort: 80
+#             path: /
+#   tls: 
+#     - 
+#       hosts: 
+#         - mydomain.com
+#       secretName: my-tls-secret
