@@ -1,0 +1,67 @@
+# CI/CDpipeline
+# What for: Scripting your job
+# How to Script
+#     Groovy:
+#        Java Based Langauge
+# Jenkins Pipeline
+
+# here we are using declarative method for implementation of code in all stages from commit to deployment stage
+
+# pipeline {
+#     agent { label "docker" }    //Run everything on an agent with the docker daemon
+#     triggers { 
+#         pollSCM('*/20 * * * *')
+#     }
+#     environment {
+#         IMAGE = readMavenPom().getArtifactId()    //Use Pipeline Utility Steps
+#         VERSION = readMavenPom().getVersion()
+#     }
+#     stages {
+#         stage('Build') {
+#             agent {
+#                 docker {
+#                     reuseNode true    //reuse the workspace on the agent defined at top-level\
+#                     image 'maven:3.5.0-jdk-8'
+#                 }
+#             }
+#             steps {
+#                 sh 'mvn clean install'
+#                 junit(allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml')
+#             }
+#         }
+#         stage('Quality Analysis') {
+#             environment {
+#                 SONAR = credentials('sonar') //use ‘sonar’ credentials
+#             }
+#             parallel {     // run Sonar Scan and Integration tests in parallel
+#                 stage ("Integration Test"} {
+#                     steps {
+#                         echo 'Run integration tests here...'
+#                     }
+#                 }
+#                 stage("Sonar Scan") {
+#                     steps {
+#                         sh "mvn sonar:sonar -Dsonar.login=$SONAR_PSW"
+#                     }
+#                 }
+#             }
+#         }
+#         stage('Build and Publish Image') {
+#             when {
+#                 branch 'master'    //only run these steps on the master branch
+#             }
+#             steps {
+#                 sh """
+#                     docker build -t ${IMAGE} .
+#                     docker tag ${IMAGE} ${IMAGE}:${VERSION}
+#                     docker push ${IMAGE}:${VERSION}
+#                 """
+#             }
+#         }
+#     }
+#     post {
+#         failure {    // notify users when the Pipeline fails
+#             mail(to: 'sudheer77@gmail.com', subject: "Failed Pipeline", body: "Something is wrong.")
+#         }
+#     }
+# }

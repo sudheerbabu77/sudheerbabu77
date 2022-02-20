@@ -1,0 +1,47 @@
+# Here for suppose if we want scale the pods we have two kind of methods
+# they are 
+#  1.manual scaling
+#  2.automatic scaling
+# for manual scaling we use command after complition of deployment 
+
+# kubectl scale [--resource-version=version] [--current-replicas=count] --replicas=COUNT (-f FILENAME | TYPE NAME)
+
+# for autoscaling we have two types 
+
+# horizentztal pod autoscale
+# vertical pod autoscale
+
+# here we using horizental pod scaling 
+
+# With a Horizontal Pod Autoscaler, “a cluster operator declares their target usage for metrics,
+# such as CPU or memory utilization, as well their desired maximum and minimum desired
+# number of replicas,” Cohen says. “The cluster will then reconcile the number of replicas accordingly,
+# and scale up or down the number of running pods based on their current usage and the desired target.”
+
+# apiVersion: v1
+# items:
+# - apiVersion: autoscaling/v1                                                        
+#   kind: HorizontalPodAutoscaler
+#   metadata:
+#     creationTimestamp: ...
+#     name: HPA_NAME
+#     namespace: default
+#     resourceVersion: "664"
+#     selfLink: ...
+#     uid: ...
+#   spec:
+#     maxReplicas: 10
+#     minReplicas: 1
+#     scaleTargetRef:
+#       apiVersion: apps/v1
+#       kind: Deployment
+#       name: HPA_NAME
+#     targetCPUUtilizationPercentage: 50
+
+# $ kubectl apply -f hpa.yml
+# $ kubectl get hpa [to know status of hpa] 
+# $ kubectl describe hpa hpa_name
+# $ kubectl delete hpa hpa_name [to delete the object]
+
+# from above steps we can scale service 
+  
